@@ -1,0 +1,58 @@
+name: Github Docker CI
+
+on:
+  push:
+    branches: master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php_version: ['7.4']
+        os_type: ['alpine']
+        php_type: ['fpm']
+    steps:
+      - uses: actions/checkout@v2
+      - uses: e1himself/goss-installation-action@v1.0.1
+
+      - name: Get git tag
+        uses: PssbleTrngle/VersionManagment@v1.0.8
+        id: get_version
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+          fallback: v0.1.0
+          prefix: v
+
+      - name: Build the Docker image
+        env:
+          PHP_VERSION: ${{ matrix.php_version }}
+          DOCKER_IMAGE: ${{ matrix.php_version }}-${{ matrix.php_type }}
+          DOCKER_TEMPLATE: ${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}
+          IMAGE_TAG: noitran/php:${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}
+          IMAGE_TAG_LATEST: noitran/php:${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}-latest
+        run: |
+          echo ${{ steps.get_version.outputs.next }}
+          echo "::set-env name=php_version::${PHP_VERSION}"
+          echo "::set-env name=docker_image::${DOCKER_IMAGE}"
+          echo "::set-env name=docker_template::${DOCKER_TEMPLATE}"
+          echo "::set-env name=image_tag_latest::${IMAGE_TAG_LATEST}"
+          echo "::set-env name=image_tag_versioned::${IMAGE_TAG}-${{ steps.get_version.outputs.next }}"
+
+          sed -e "s/%%DOCKER_IMAGE%%/${DOCKER_IMAGE}/g" ${DOCKER_TEMPLATE}/Dockerfile.template > ${DOCKER_TEMPLATE}/Dockerfile
+          docker build -f ${DOCKER_TEMPLATE}/Dockerfile . -t ${IMAGE_TAG}-latest
+          docker image ls
+
+      - name: Test image which was built
+        if: success()
+        run: |
+          GOSS_FILES_PATH=${{ env.docker_template }} dgoss run -t ${{ env.image_tag_latest }}
+
+      - name: Push image to Docker hub
+        if: success()
+        run: |
+          echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+          docker push ${{ env.image_tag_latest }}
+          docker tag ${{ env.image_tag_latest }} ${{ env.image_tag_versioned }}
+          docker push ${{ env.image_tag_versioned }}
+          docker logout

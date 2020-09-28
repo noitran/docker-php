@@ -1,0 +1,30 @@
+file:
+  /usr/local/etc/php/conf.d/xdebug.ini:
+    filetype: file
+    exists: true
+    contains:
+      - "xdebug.remote_enable = 1"
+group:
+  www-data:
+    exists: true
+user:
+  www-data:
+    exists: true
+    groups:
+      - www-data
+package:
+  curl:
+    installed: true
+command:
+  "php -v":
+    stdout:
+      - "PHP 7.4"
+    stderr:
+      - "!/Unable to load dynamic library/"
+    exit-status: 0
+  "php -m":
+    stdout:
+      - gd
+      - pdo_mysql
+      - pdo_pgsql
+    exit-status: 0
