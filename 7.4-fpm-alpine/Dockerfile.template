@@ -1,4 +1,4 @@
-FROM %%DOCKER_IMAGE%%
+FROM noitran/php-base:%%DOCKER_IMAGE%%
 
 LABEL maintainer="noitran.black@gmail.com"
 
