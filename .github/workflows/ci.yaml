@@ -27,7 +27,7 @@ jobs:
       - name: Build the Docker image
         env:
           PHP_VERSION: ${{ matrix.php_version }}
-          DOCKER_IMAGE: ${{ matrix.php_version }}-${{ matrix.php_type }}
+          DOCKER_IMAGE: noitran/php-base:${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}-latest
           DOCKER_TEMPLATE: ${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}
           IMAGE_TAG: noitran/php:${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}
           IMAGE_TAG_LATEST: noitran/php:${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}-latest
