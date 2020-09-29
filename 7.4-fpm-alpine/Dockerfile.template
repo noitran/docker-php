@@ -2,12 +2,14 @@ FROM noitran/php-base:%%DOCKER_IMAGE%%
 
 LABEL maintainer="noitran.black@gmail.com"
 
+ENV ENABLE_XDEBUG=false
+
 ARG INSTALL_XDEBUG=true
 ARG INSTALL_BZ2=false
 
 # A self contained CodeCoverage compatible driver for PHP7
 # https://github.com/krakjoe/pcov
-ARG INSTALL_PCOV=true
+ARG INSTALL_PCOV=false
 
 ARG INSTALL_PHPREDIS=true
 ARG INSTALL_RDKAFKA=false
@@ -20,7 +22,7 @@ ARG INSTALL_MONGODB=false
 # And also can be used to spot sql injection vulnerabilities, and shell inject, etc.
 # https://www.php.net/manual/en/intro.taint.php
 ARG INSTALL_TAINT=false
-ARG INSTALL_BCMATH=true
+ARG INSTALL_BCMATH=false
 
 # For PDF processing
 # Example: https://github.com/spatie/pdf-to-image
@@ -181,7 +183,17 @@ RUN if [ ${INSTALL_COMPOSER} = true ]; then \
 # ;fi
 
 COPY ./configs/xdebug.ini /usr/local/etc/php/conf.d/
+COPY ./7.4-fpm-alpine/docker-entrypoint.sh /
+RUN chmod +x /docker-entrypoint.sh
 
 # Cleaning
 # Remove Build Dependencies
-RUN set -eux && apk del -f .phpize-deps
+RUN set -eux && \
+    apk del -f .phpize-deps && \
+    rm -rf /var/www/html
+
+WORKDIR /var/www
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+CMD ["php-fpm"]

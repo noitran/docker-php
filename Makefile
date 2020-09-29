@@ -1,4 +1,4 @@
-DOCKER_IMAGE ?= noitran\/php-base:7.4-fpm-alpine-latest
+DOCKER_IMAGE ?= 7.4-fpm-alpine-latest
 TEMPLATE ?= 7.4-fpm-alpine
 IMAGE_TAG ?= noitran/php:7.4-fpm-alpine-latest
 
@@ -19,7 +19,7 @@ build:
 		--build-arg INSTALL_XMLRPC=false \
 		--build-arg INSTALL_FAKETIME=false \
 		--build-arg INSTALL_COMPOSER=false \
-		--build-arg INSTALL_MONGODB=true
+		--build-arg INSTALL_MONGODB=false
 .PHONY: build
 
 test:
