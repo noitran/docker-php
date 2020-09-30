@@ -17,10 +17,8 @@ jobs:
       - uses: e1himself/goss-installation-action@v1.0.1
 
       - name: Get git tag
-        uses: WyriHaximus/github-action-get-previous-tag@master
         id: get_version
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
 
       - name: Set Environment Variables
         env:
