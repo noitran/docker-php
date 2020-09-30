@@ -17,12 +17,10 @@ jobs:
       - uses: e1himself/goss-installation-action@v1.0.1
 
       - name: Get git tag
-        uses: PssbleTrngle/VersionManagment@v1.0.8
+        uses: WyriHaximus/github-action-get-previous-tag@master
         id: get_version
-        with:
-          token: ${{secrets.GITHUB_TOKEN}}
-          fallback: v0.1.0
-          prefix: v
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Set Environment Variables
         env:
@@ -32,13 +30,12 @@ jobs:
           IMAGE_TAG: noitran/php:${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}
           IMAGE_TAG_LATEST: noitran/php:${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}-latest
         run: |
-          echo $(git describe --tags)
-          echo ${{ steps.get_version.outputs.next }}
+          echo ${{ steps.get_version.outputs.tag }}
           echo "::set-env name=php_version::${PHP_VERSION}"
           echo "::set-env name=docker_image::${DOCKER_IMAGE}"
           echo "::set-env name=docker_template::${DOCKER_TEMPLATE}"
           echo "::set-env name=image_tag_latest::${IMAGE_TAG_LATEST}"
-          echo "::set-env name=image_tag_versioned::${IMAGE_TAG}-${{ steps.get_version.outputs.next }}"
+          echo "::set-env name=image_tag_versioned::${IMAGE_TAG}-${{ steps.get_version.outputs.tag }}"
 
       - name: Build the Docker image
         run: |
