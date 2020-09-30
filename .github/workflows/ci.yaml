@@ -43,7 +43,7 @@ jobs:
       - name: Build the Docker image
         run: |
           sed -e "s/%%DOCKER_IMAGE%%/${{ env.docker_image }}/g" ${{ env.docker_template }}/Dockerfile.template > ${{ env.docker_template }}/Dockerfile
-          sed -e "s/%%DOCKER_TEMPLATE%%/${{ env.docker_template }}/g" ${{ env.docker_template }}/Dockerfile
+          sed -i "s/%%DOCKER_TEMPLATE%%/${{ env.docker_template }}/g" ${{ env.docker_template }}/Dockerfile
           docker build -f ${{ env.docker_template }}/Dockerfile . -t ${{ env.image_tag_latest }}
           docker image ls
 
