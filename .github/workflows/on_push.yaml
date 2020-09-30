@@ -1,0 +1,58 @@
+name: Github Docker CI
+
+on:
+  push:
+    branches: master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php_version: ['7.4']
+        os_type: ['alpine']
+        php_type: ['fpm']
+    steps:
+      - uses: actions/checkout@v2
+      - uses: e1himself/goss-installation-action@v1.0.1
+
+      - name: Get git tag
+        uses: noitran/versionee-github-action@master
+        id: get_tag
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+          fallback: v1.0.0
+          prefix: v
+
+      - name: Set Environment Variables
+        env:
+          PHP_VERSION: ${{ matrix.php_version }}
+          DOCKER_IMAGE: ${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}-latest
+          DOCKER_TEMPLATE: ${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}
+          IMAGE_TAG: noitran/php:${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}
+          IMAGE_TAG_LATEST: noitran/php:${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}-latest
+        run: |
+          echo ${{ steps.get_tag.outputs.tag }}
+          echo "::set-env name=php_version::${PHP_VERSION}"
+          echo "::set-env name=docker_image::${DOCKER_IMAGE}"
+          echo "::set-env name=docker_template::${DOCKER_TEMPLATE}"
+          echo "::set-env name=image_tag_latest::${IMAGE_TAG_LATEST}"
+
+      - name: Build the Docker image
+        run: |
+          sed -e "s/%%DOCKER_IMAGE%%/${{ env.docker_image }}/g" ${{ env.docker_template }}/Dockerfile.template > ${{ env.docker_template }}/Dockerfile
+          sed -i "s/%%DOCKER_TEMPLATE%%/${{ env.docker_template }}/g" ${{ env.docker_template }}/Dockerfile
+          docker build -f ${{ env.docker_template }}/Dockerfile . -t ${{ env.image_tag_latest }}
+          docker image ls
+
+      - name: Test image which was built
+        if: success()
+        run: |
+          GOSS_FILES_PATH=${{ env.docker_template }} dgoss run -t ${{ env.image_tag_latest }}
+
+      - name: Push image to Docker hub
+        if: success()
+        run: |
+          echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+          docker push ${{ env.image_tag_latest }}
+          docker logout
