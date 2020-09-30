@@ -5,21 +5,21 @@ IMAGE_TAG ?= noitran/php:7.4-fpm-alpine-latest
 build:
 	sed -e 's/%%DOCKER_IMAGE%%/$(DOCKER_IMAGE)/g' $(TEMPLATE)/Dockerfile.template > $(TEMPLATE)/Dockerfile
 	docker build -f $(TEMPLATE)/Dockerfile . -t $(IMAGE_TAG) \
-		--build-arg INSTALL_BZ2=false \
-		--build-arg INSTALL_RDKAFKA=false \
-		--build-arg INSTALL_PG_CLIENT=false \
-		--build-arg INSTALL_POSTGIS=false \
-		--build-arg INSTALL_MYSQL_CLIENT=false \
-		--build-arg INSTALL_TAINT=false \
-		--build-arg INSTALL_BCMATH=false \
-		--build-arg INSTALL_GHOSTSCRIPT=false \
+		--build-arg INSTALL_BZ2=true \
+		--build-arg INSTALL_RDKAFKA=true \
+		--build-arg INSTALL_PG_CLIENT=true \
+		--build-arg INSTALL_POSTGIS=true \
+		--build-arg INSTALL_MYSQL_CLIENT=true \
+		--build-arg INSTALL_TAINT=true \
+		--build-arg INSTALL_BCMATH=true \
+		--build-arg INSTALL_GHOSTSCRIPT=true \
 		--build-arg INSTALL_IMAGE_PROCESSORS=true \
 		--build-arg INSTALL_IMAGE_OPTIMIZERS=true \
-		--build-arg INSTALL_YAML=false \
-		--build-arg INSTALL_XMLRPC=false \
-		--build-arg INSTALL_FAKETIME=false \
-		--build-arg INSTALL_COMPOSER=false \
-		--build-arg INSTALL_MONGODB=false
+		--build-arg INSTALL_YAML=true \
+		--build-arg INSTALL_XMLRPC=true \
+		--build-arg INSTALL_FAKETIME=true \
+		--build-arg INSTALL_COMPOSER=true \
+		--build-arg INSTALL_MONGODB=true
 .PHONY: build
 
 test:
