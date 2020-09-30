@@ -24,7 +24,7 @@ jobs:
           fallback: v0.1.0
           prefix: v
 
-      - name: Build the Docker image
+      - name: Set Environment Variables
         env:
           PHP_VERSION: ${{ matrix.php_version }}
           DOCKER_IMAGE: ${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}-latest
@@ -32,6 +32,7 @@ jobs:
           IMAGE_TAG: noitran/php:${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}
           IMAGE_TAG_LATEST: noitran/php:${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}-latest
         run: |
+          echo $(git describe --tags)
           echo ${{ steps.get_version.outputs.next }}
           echo "::set-env name=php_version::${PHP_VERSION}"
           echo "::set-env name=docker_image::${DOCKER_IMAGE}"
@@ -39,8 +40,11 @@ jobs:
           echo "::set-env name=image_tag_latest::${IMAGE_TAG_LATEST}"
           echo "::set-env name=image_tag_versioned::${IMAGE_TAG}-${{ steps.get_version.outputs.next }}"
 
-          sed -e "s/%%DOCKER_IMAGE%%/${DOCKER_IMAGE}/g" ${DOCKER_TEMPLATE}/Dockerfile.template > ${DOCKER_TEMPLATE}/Dockerfile
-          docker build -f ${DOCKER_TEMPLATE}/Dockerfile . -t ${IMAGE_TAG}-latest
+      - name: Build the Docker image
+        run: |
+          sed -e "s/%%DOCKER_IMAGE%%/${{ env.docker_image }}/g" ${{ env.docker_template }}/Dockerfile.template > ${{ env.docker_template }}/Dockerfile
+          sed -e "s/%%DOCKER_TEMPLATE%%/${{ env.docker_template }}/g" ${{ env.docker_template }}/Dockerfile
+          docker build -f ${{ env.docker_template }}/Dockerfile . -t ${{ env.image_tag_latest }}
           docker image ls
 
       - name: Test image which was built

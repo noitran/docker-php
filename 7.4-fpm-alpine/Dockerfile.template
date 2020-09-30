@@ -192,7 +192,7 @@ RUN if [ ${INSTALL_COMPOSER} = true ]; then \
 # ;fi
 
 COPY ./configs/xdebug.ini /usr/local/etc/php/conf.d/
-COPY ./7.4-fpm-alpine/docker-entrypoint.sh /
+COPY ./%%DOCKER_TEMPLATE%%/docker-entrypoint.sh /
 RUN chmod +x /docker-entrypoint.sh
 
 # Cleaning
