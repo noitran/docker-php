@@ -7,6 +7,21 @@ file:
     exists: true
     contains:
       - "xdebug.remote_enable = 1"
+  /usr/local/etc/php-fpm.d/docker.conf:
+    filetype: file
+    exists: true
+    contains:
+      - "log_limit = 8192"
+  /usr/local/etc/php-fpm.d/zz-docker.conf:
+    filetype: file
+    exists: true
+    contains:
+      - "daemonize = no"
+  /usr/local/etc/php-fpm.d/www.conf:
+    filetype: file
+    exists: true
+    contains:
+      - "pm.max_children = 5"
 port:
   tcp6:9000:
     listening: true

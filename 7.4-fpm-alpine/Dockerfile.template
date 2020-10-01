@@ -195,6 +195,11 @@ COPY ./configs/xdebug.ini /usr/local/etc/php/conf.d/
 COPY ./%%DOCKER_TEMPLATE%%/docker-entrypoint.sh /
 RUN chmod +x /docker-entrypoint.sh
 
+# Only for FPM images
+COPY ./configs/php-fpm.d/docker.conf /usr/local/etc/php-fpm.d/
+COPY ./configs/php-fpm.d/zz-docker.conf /usr/local/etc/php-fpm.d/
+COPY ./configs/php-fpm.d/www.conf /usr/local/etc/php-fpm.d/
+
 # Cleaning
 # Remove Build Dependencies
 RUN set -eux && \
