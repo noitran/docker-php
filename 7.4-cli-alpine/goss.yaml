@@ -7,6 +7,7 @@ file:
     exists: true
     contains:
       - "xdebug.remote_enable = 1"
+
   {{ if getEnv "MAXIMAL_BUILD" | eq "true" }}
   /usr/lib/faketime/libfaketime.so.1:
     filetype: file

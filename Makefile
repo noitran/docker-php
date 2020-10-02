@@ -1,6 +1,6 @@
-DOCKER_IMAGE ?= 7.4-fpm-alpine-latest
-TEMPLATE ?= 7.4-fpm-alpine
-IMAGE_TAG ?= noitran/php:7.4-fpm-alpine-latest
+DOCKER_IMAGE ?= 7.4-cli-alpine-latest
+TEMPLATE ?= 7.4-cli-alpine
+IMAGE_TAG ?= noitran/php:7.4-cli-alpine-latest
 
 build:
 	set -eux
