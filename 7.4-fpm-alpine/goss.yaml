@@ -1,3 +1,6 @@
+# Manual
+# https://github.com/aelsabbahy/goss/blob/master/docs/manual.md
+# https://www.calhoun.io/intro-to-templates-p3-functions/
 file:
   /usr/local/etc/php-fpm.conf:
     filetype: file
@@ -22,6 +25,11 @@ file:
     exists: true
     contains:
       - "pm.max_children = 5"
+  {{ if getEnv "MAXIMAL_BUILD" | eq "true" }}
+  /usr/lib/faketime/libfaketime.so.1:
+    filetype: file
+    exists: true
+  {{ end }}
 port:
   tcp6:9000:
     listening: true
@@ -58,11 +66,29 @@ command:
       - sockets
       - intl
       - pcntl
-      # Compiled Dependencies
-      #- xdebug
-      #- bz2
-      #- pcov
-      #- redis
-      # Optional Dependencies
-      # - xmlrpc
+      - redis
+  {{ if getEnv "MAXIMAL_BUILD" | eq "true" }}
+      - xdebug
+      - bz2
+      - pcov
+      - rdkafka
+      - mongodb
+      - taint
+      - bcmath
+      - imagick
+      - gd
+      - exif
+      - yaml
+      - xmlrpc
+  {{ end }}
     exit-status: 0
+  "composer -v":
+    stdout:
+      - "Composer version"
+    exit-status: 0
+  {{ if getEnv "MAXIMAL_BUILD" | eq "true" }}
+  "cat /etc/ld.so.preload":
+    stdout:
+      - "/usr/lib/faketime/libfaketime.so.1"
+    exit-status: 0
+  {{ end }}

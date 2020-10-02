@@ -183,13 +183,16 @@ RUN if [ ${INSTALL_COMPOSER} = true ]; then \
     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer \
 ;fi
 
-# @todo
 # Adding the faketime library to the preload file needs to be done last.
 # Otherwise, it will preload it for all commands that follow in this file
-# RUN if [ ${INSTALL_FAKETIME} = true ]; then \
-#     apt-get install -y libfaketime; \
-#     echo "/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1" > /etc/ld.so.preload \
-# ;fi
+RUN if [ ${INSTALL_FAKETIME} = true ]; then \
+    set -eux; \
+    echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
+    apk add --update --no-cache libfaketime && \
+    rm -rf /var/lib/apt/lists/* && \
+    sed -i '/http:\/\/dl-cdn\.alpinelinux\.org\/alpine\/edge\/testing/d' /etc/apk/repositories && \
+    echo "/usr/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload \
+;fi
 
 COPY ./configs/xdebug.ini /usr/local/etc/php/conf.d/
 COPY ./%%DOCKER_TEMPLATE%%/docker-entrypoint.sh /
@@ -203,7 +206,10 @@ COPY ./configs/php-fpm.d/www.conf /usr/local/etc/php-fpm.d/
 # Cleaning
 # Remove Build Dependencies
 RUN set -eux && \
-    apk del -f .phpize-deps && \
+    apk del -f \
+        .phpize-deps \
+        bash \
+        zlib-dev && \
     rm -rf /var/www/html
 
 WORKDIR /var/www
