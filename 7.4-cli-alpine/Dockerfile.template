@@ -196,7 +196,6 @@ RUN if [ ${INSTALL_FAKETIME} = true ]; then \
 
 COPY ./configs/xdebug.ini /usr/local/etc/php/conf.d/
 COPY ./%%DOCKER_TEMPLATE%%/docker-entrypoint.sh /
-RUN chmod +x /docker-entrypoint.sh
 
 # Cleaning
 # Remove Build Dependencies
@@ -205,7 +204,8 @@ RUN set -eux && \
         .phpize-deps \
         bash \
         zlib-dev && \
-    rm -rf /var/www/html
+    rm -rf /var/www/html && \
+    chmod +x /docker-entrypoint.sh
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 

@@ -2,12 +2,19 @@ DOCKER_IMAGE ?= 7.4-cli-alpine-latest
 TEMPLATE ?= 7.4-cli-alpine
 IMAGE_TAG ?= noitran/php:7.4-cli-alpine-latest
 
-build:
+prepare:
 	set -eux
 	sed -e 's/%%DOCKER_IMAGE%%/$(DOCKER_IMAGE)/g' $(TEMPLATE)/Dockerfile.template > $(TEMPLATE)/Dockerfile
 	# https://unix.stackexchange.com/questions/401905/bsd-sed-vs-gnu-sed-and-i
 	# OSX uses BSD based version of sed utility
 	sed -i '' 's/%%DOCKER_TEMPLATE%%/$(TEMPLATE)/g' $(TEMPLATE)/Dockerfile
+.PHONY: prepare
+
+regular:
+	docker build -f $(TEMPLATE)/Dockerfile . -t $(IMAGE_TAG)
+.PHONY: regular
+
+maximal:
 	docker build -f $(TEMPLATE)/Dockerfile . -t $(IMAGE_TAG) \
 		--build-arg INSTALL_XDEBUG=true \
 		--build-arg INSTALL_BZ2=true \
@@ -27,6 +34,15 @@ build:
 		--build-arg INSTALL_XMLRPC=true \
 		--build-arg INSTALL_COMPOSER=true \
 		--build-arg INSTALL_FAKETIME=true
+.PHONY: maximal
+
+build-regular: prepare regular
+.PHONY: build-regular
+
+build-maximal: prepare maximal
+.PHONY: build-maximal
+
+build: build-regular
 .PHONY: build
 
 test:

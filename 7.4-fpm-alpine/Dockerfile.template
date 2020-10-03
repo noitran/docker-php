@@ -196,7 +196,6 @@ RUN if [ ${INSTALL_FAKETIME} = true ]; then \
 
 COPY ./configs/xdebug.ini /usr/local/etc/php/conf.d/
 COPY ./%%DOCKER_TEMPLATE%%/docker-entrypoint.sh /
-RUN chmod +x /docker-entrypoint.sh
 
 # Only for FPM images
 COPY ./configs/php-fpm.d/docker.conf /usr/local/etc/php-fpm.d/
@@ -210,7 +209,8 @@ RUN set -eux && \
         .phpize-deps \
         bash \
         zlib-dev && \
-    rm -rf /var/www/html
+    rm -rf /var/www/html && \
+    chmod +x /docker-entrypoint.sh
 
 WORKDIR /var/www
 
