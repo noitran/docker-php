@@ -212,7 +212,7 @@ RUN set -eux && \
     rm -rf /var/www/html && \
     chmod +x /docker-entrypoint.sh
 
-WORKDIR /var/www
+WORKDIR /app
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
