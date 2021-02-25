@@ -17,7 +17,7 @@ jobs:
         php_type: ['fpm', 'cli']
     steps:
       - uses: actions/checkout@v2
-      - uses: e1himself/goss-installation-action@v1.0.1
+      - uses: e1himself/goss-installation-action@v1.0.3
 
       - name: Get git tag
         uses: noitran/versionee-github-action@master
