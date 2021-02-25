@@ -1,6 +1,6 @@
-DOCKER_IMAGE ?= 7.4-cli-alpine-latest
-TEMPLATE ?= 7.4-cli-alpine
-IMAGE_TAG ?= noitran/php:7.4-cli-alpine-latest
+DOCKER_IMAGE ?= 8.0-cli-alpine-latest
+TEMPLATE ?= 8.0-cli-alpine
+IMAGE_TAG ?= noitran/php:8.0-cli-alpine-latest
 
 prepare:
 	set -eux
@@ -25,7 +25,6 @@ maximal:
 		--build-arg INSTALL_POSTGIS=true \
 		--build-arg INSTALL_MYSQL_CLIENT=true \
 		--build-arg INSTALL_MONGODB=true \
-		--build-arg INSTALL_TAINT=true \
 		--build-arg INSTALL_BCMATH=true \
 		--build-arg INSTALL_GHOSTSCRIPT=true \
 		--build-arg INSTALL_IMAGE_PROCESSORS=true \

@@ -1,0 +1,240 @@
+FROM noitran/php-base:%%DOCKER_IMAGE%% AS ext-imagick
+
+ENV EXT_AMQP_VERSION=master
+
+RUN docker-php-source extract \
+    && apk -Uu add git imagemagick imagemagick-dev \
+    && git clone --branch $EXT_AMQP_VERSION --depth 1 https://github.com/Imagick/imagick.git /usr/src/php/ext/imagick \
+    && cd /usr/src/php/ext/imagick && git submodule update --init \
+    && docker-php-ext-install imagick
+RUN ls -al /usr/local/lib/php/extensions/
+
+
+FROM noitran/php-base:%%DOCKER_IMAGE%%
+
+LABEL maintainer="noitran.black@gmail.com"
+
+ENV ENABLE_XDEBUG=false
+
+ARG PECL_XDEBUG_VERSION=3.0.3
+ARG PECL_PCOV_VERSION=1.0.6
+ARG PECL_REDIS_VERSION=5.3.3
+ARG PECL_RDKAFKA_VERSION=5.0.0
+ARG PECL_MONGODB_VERSION=1.9.0
+ARG PECL_TAINT_VERSION=2.1.0
+ARG PECL_IMAGICK_VERSION=master
+ARG PECL_YAML_VERSION=2.2.1
+ARG PECL_XMLRPC_VERSION="1.0.0RC2"
+ARG C_RDKAFKA_VERSION=1.6.1
+
+ARG INSTALL_XDEBUG=true
+ARG INSTALL_BZ2=false
+
+# A self contained CodeCoverage compatible driver for PHP7
+# https://github.com/krakjoe/pcov
+ARG INSTALL_PCOV=false
+
+ARG INSTALL_PHPREDIS=true
+ARG INSTALL_RDKAFKA=false
+ARG INSTALL_PG_CLIENT=false
+ARG INSTALL_POSTGIS=false
+ARG INSTALL_MYSQL_CLIENT=false
+ARG INSTALL_MONGODB=false
+
+# Taint is an extension, which is used for detecting XSS codes(tainted string)
+# And also can be used to spot sql injection vulnerabilities, and shell inject, etc.
+# https://www.php.net/manual/en/intro.taint.php
+ARG INSTALL_TAINT=false
+ARG INSTALL_BCMATH=false
+
+# For PDF processing
+# Example: https://github.com/spatie/pdf-to-image
+ARG INSTALL_GHOSTSCRIPT=false
+
+# Imagick, GD, Exif
+ARG INSTALL_IMAGE_PROCESSORS=false
+ARG INSTALL_IMAGE_OPTIMIZERS=false
+
+ARG INSTALL_YAML=false
+ARG INSTALL_XMLRPC=false
+ARG INSTALL_COMPOSER=true
+ARG INSTALL_FAKETIME=false
+
+# Temporary Build depencencies for compiling Pecl extensions
+RUN set -eux; \
+    apk add --update --no-cache --virtual .phpize-deps \
+        $PHPIZE_DEPS \
+        bash \
+        zlib-dev
+
+RUN if [ ${INSTALL_XDEBUG} = true ]; then \
+    pecl install xdebug-${PECL_XDEBUG_VERSION}; \
+    docker-php-ext-enable xdebug \
+;fi
+
+RUN if [ ${INSTALL_BZ2} = true ]; then \
+    set -eux; \
+    # Can't uninstall bzip2-dev
+    apk add --update --no-cache bzip2-dev; \
+    docker-php-ext-install bz2 \
+;fi
+
+RUN if [ ${INSTALL_PCOV} = true ]; then \
+    pecl install pcov-${PECL_PCOV_VERSION} && \
+    docker-php-ext-enable pcov \
+;fi
+
+RUN if [ ${INSTALL_PHPREDIS} = true ]; then \
+    # Install Php Redis Extension
+    pecl install redis-${PECL_REDIS_VERSION} && \
+    rm -rf /tmp/pear && \
+    docker-php-ext-enable redis \
+;fi
+
+RUN if [ ${INSTALL_RDKAFKA} = true ]; then \
+    curl -L -o /tmp/librdkafka.tar.gz "https://github.com/edenhill/librdkafka/archive/v${C_RDKAFKA_VERSION}.tar.gz" && \
+    mkdir librdkafka && \
+    tar -C librdkafka -zxvf /tmp/librdkafka.tar.gz --strip 1 && \
+    ( \
+        cd librdkafka \
+        && ./configure \
+        && make \
+        && make install \
+    ) && \
+    rm -r librdkafka && \
+    rm /tmp/librdkafka.tar.gz && \
+    pecl install rdkafka-${PECL_RDKAFKA_VERSION} && \
+    docker-php-ext-enable rdkafka \
+;fi
+
+RUN if [ ${INSTALL_PG_CLIENT} = true ]; then \
+    set -eux; \
+    apk add --update --no-cache postgresql-client && \
+    if [ ${INSTALL_POSTGIS} = true ]; then \
+        apk add --update --no-cache postgis; \
+    fi \
+;fi
+
+RUN if [ ${INSTALL_MYSQL_CLIENT} = true ]; then \
+    set -eux; \
+    apk add --update --no-cache mysql-client \
+;fi
+
+RUN if [ ${INSTALL_MONGODB} = true ]; then \
+    pecl install mongodb-${PECL_MONGODB_VERSION} && \
+    docker-php-ext-enable mongodb \
+;fi
+
+RUN if [ ${INSTALL_TAINT} = true ]; then \
+    pecl install taint-${PECL_TAINT_VERSION} && \
+    docker-php-ext-enable taint \
+;fi
+
+RUN if [ ${INSTALL_BCMATH} = true ]; then \
+    docker-php-ext-install bcmath \
+;fi
+
+RUN if [ ${INSTALL_GHOSTSCRIPT} = true ]; then \
+    set -eux; \
+    apk add --update --no-cache \
+        ghostscript \
+;fi
+
+
+COPY --from=ext-imagick /usr/local/etc/php/conf.d/docker-php-ext-imagick.ini /tmp/docker-php-ext-imagick.ini
+COPY --from=ext-imagick /usr/local/lib/php/extensions/no-debug-non-zts-20200930/imagick.so /tmp/imagick.so
+
+RUN if [ ${INSTALL_IMAGE_PROCESSORS} = true ]; then \
+    set -eux; \
+    # Install temporary Build dependencies
+    apk add --update --no-cache --virtual .build-deps \
+        freetype-dev \
+        libjpeg-turbo-dev \
+        libpng-dev && \
+    # Install Production Dependencies
+    apk add --update --no-cache \
+        imagemagick \
+        imagemagick-dev; \
+    # Install imagick library
+    cp /tmp/docker-php-ext-imagick.ini /usr/local/etc/php/conf.d/docker-php-ext-imagick.ini; \
+    cp /tmp/imagick.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/imagick.so; \
+    # Install exif library
+    docker-php-ext-install exif; \
+    # Install the PHP gd library
+    docker-php-ext-configure gd \
+            --prefix=/usr \
+            --with-jpeg \
+            --with-freetype && \
+    docker-php-ext-install gd && \
+    # Remove not needed Build dependencies
+    apk del -f .build-deps \
+;fi
+
+RUN if [ ${INSTALL_IMAGE_OPTIMIZERS} = true ]; then \
+    set -eux; \
+    apk add --update --no-cache \
+        jpegoptim \
+        optipng \
+        pngquant \
+        gifsicle \
+;fi
+
+RUN if [ ${INSTALL_YAML} = true ]; then \
+    set -eux; \
+    apk add --update --no-cache yaml; \
+    apk add --update --no-cache --virtual .build-deps \
+            yaml-dev && \
+    pecl install yaml-${PECL_YAML_VERSION} && \
+    docker-php-ext-enable yaml && \
+    apk del -f .build-deps \
+;fi
+
+# XML RPC is deprecated.
+# https://php.watch/versions/8.0/xmlrpc
+RUN if [ ${INSTALL_XMLRPC} = true ]; then \
+    set -eux; \
+    apk add --update --no-cache --virtual .build-deps \
+            libxml2-dev && \
+    pecl install xmlrpc-${PECL_XMLRPC_VERSION} && \
+    docker-php-ext-enable xmlrpc && \
+    apk del -f .build-deps \
+;fi
+
+RUN if [ ${INSTALL_COMPOSER} = true ]; then \
+    curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer \
+;fi
+
+# Adding the faketime library to the preload file needs to be done last.
+# Otherwise, it will preload it for all commands that follow in this file
+RUN if [ ${INSTALL_FAKETIME} = true ]; then \
+    set -eux; \
+    echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories && \
+    apk add --update --no-cache libfaketime && \
+    rm -rf /var/lib/apt/lists/* && \
+    sed -i '/http:\/\/dl-cdn\.alpinelinux\.org\/alpine\/edge\/testing/d' /etc/apk/repositories && \
+    echo "/usr/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload \
+;fi
+
+COPY ./configs/xdebug.ini /usr/local/etc/php/conf.d/
+COPY ./%%DOCKER_TEMPLATE%%/docker-entrypoint.sh /
+
+# Only for FPM images
+COPY ./configs/php-fpm.d/docker.conf /usr/local/etc/php-fpm.d/
+COPY ./configs/php-fpm.d/zz-docker.conf /usr/local/etc/php-fpm.d/
+COPY ./configs/php-fpm.d/www.conf /usr/local/etc/php-fpm.d/
+
+# Cleaning
+# Remove Build Dependencies
+RUN set -eux && \
+    apk del -f \
+        .phpize-deps \
+        bash \
+        zlib-dev && \
+    rm -rf /var/www/html && \
+    chmod +x /docker-entrypoint.sh
+
+WORKDIR /app
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+CMD ["php-fpm"]

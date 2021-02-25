@@ -1,0 +1,69 @@
+# Manual
+# https://github.com/aelsabbahy/goss/blob/master/docs/manual.md
+# https://www.calhoun.io/intro-to-templates-p3-functions/
+file:
+  /usr/local/etc/php/conf.d/xdebug.ini:
+    filetype: file
+    exists: true
+    contains:
+      - "xdebug.remote_enable = 1"
+
+  {{ if getEnv "MAXIMAL_BUILD" | eq "true" }}
+  /usr/lib/faketime/libfaketime.so.1:
+    filetype: file
+    exists: true
+  {{ end }}
+group:
+  www-data:
+    exists: true
+user:
+  www-data:
+    exists: true
+    groups:
+      - www-data
+package:
+  curl:
+    installed: true
+command:
+  "php -v":
+    stdout:
+      - "PHP 8.0"
+    stderr:
+      - "!/Unable to load dynamic library/"
+    exit-status: 0
+  "php -m":
+    stdout:
+      # Base Image Dependencies
+      - pdo_mysql
+      - pdo_pgsql
+      - OPcache
+      - amqp
+      - sockets
+      - intl
+      - pcntl
+      - redis
+  {{ if getEnv "MAXIMAL_BUILD" | eq "true" }}
+      - xdebug
+      - bz2
+      - pcov
+      - rdkafka
+      - mongodb
+      # - taint
+      - bcmath
+      - imagick
+      - gd
+      - exif
+      - yaml
+      - xmlrpc
+  {{ end }}
+    exit-status: 0
+  "composer -v":
+    stdout:
+      - "Composer version"
+    exit-status: 0
+  {{ if getEnv "MAXIMAL_BUILD" | eq "true" }}
+  "cat /etc/ld.so.preload":
+    stdout:
+      - "/usr/lib/faketime/libfaketime.so.1"
+    exit-status: 0
+  {{ end }}

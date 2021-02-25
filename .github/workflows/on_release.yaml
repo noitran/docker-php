@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php_version: ['7.4']
+        php_version: ['7.4', '8.0']
         os_type: ['alpine']
         php_type: ['fpm', 'cli']
     steps:
@@ -35,10 +35,10 @@ jobs:
           IMAGE_TAG: noitran/php:${{ matrix.php_version }}-${{ matrix.php_type }}-${{ matrix.os_type }}
         run: |
           echo ${{ steps.get_tag.outputs.tag }}
-          echo "::set-env name=php_version::${PHP_VERSION}"
-          echo "::set-env name=docker_image::${DOCKER_IMAGE}"
-          echo "::set-env name=docker_template::${DOCKER_TEMPLATE}"
-          echo "::set-env name=image_tag_versioned::${IMAGE_TAG}-${{ steps.get_tag.outputs.tag }}"
+          echo "php_version=${PHP_VERSION}" >> $GITHUB_ENV
+          echo "docker_image=${DOCKER_IMAGE}" >> $GITHUB_ENV
+          echo "docker_template=${DOCKER_TEMPLATE}" >> $GITHUB_ENV
+          echo "image_tag_versioned=${IMAGE_TAG}-${{ steps.get_tag.outputs.tag }}" >> $GITHUB_ENV
 
       - name: Build the Docker image
         run: |
